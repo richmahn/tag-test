@@ -1,0 +1,40 @@
+name: Debug Docker Tags
+
+on:
+  push:
+    tags:
+      - "v1.*+dcs"
+
+jobs:
+  debug-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git fetch --unshallow --quiet --tags --force
+      
+      - name: Generate metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: your-org/test-image
+          tags: |
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}}
+            type=raw,value=${{ github.ref_name }}
+      
+      - name: Display generated tags
+        run: |
+          echo "Generated Tags:"
+          echo "${{ steps.meta.outputs.tags }}"
+          echo ""
+          echo "Individual tags (one per line):"
+          echo "${{ steps.meta.outputs.tags }}" | tr ' ' '\n'
+          
+      - name: Get cleaned branch name
+        id: clean_name
+        run: |
+          REF_NAME=$(echo "${{ github.ref }}" | sed -e 's/refs\/heads\///' -e 's/refs\/tags\/v//' -e 's/release\/v//' -e 's/+dcs//')
+          echo "Cleaned name is ${REF_NAME}"
+          echo "branch=${REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Would upload to: s3://bucket/gitea/${{ steps.clean_name.outputs.branch }}"
