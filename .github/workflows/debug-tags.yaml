@@ -3,7 +3,7 @@ name: Debug Docker Tags
 on:
   push:
     tags:
-      - "v1.*+dcs"
+      - "v1.*[+]dcs"
 
 jobs:
   debug-tags:
